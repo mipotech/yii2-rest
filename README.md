@@ -20,3 +20,8 @@ or add
 ```
 
 to the require section of your `composer.json` file.
+
+Usage
+-----
+
+Full documentation is at [docs/guide/README.md](docs/guide/README.md).
