@@ -67,7 +67,7 @@ namespace app\api\controllers\test;
 
 use mipotech\yii2rest\actions\BaseAction;
 
-class LoginAction extends BaseAction
+class IndexAction extends BaseAction
 {
     /**
      * @inheritdoc

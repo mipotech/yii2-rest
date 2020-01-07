@@ -28,9 +28,7 @@ You will need to make the following modifications to `config/web.php` in order t
             'class' => 'mipotech\yii2rest\UrlRule',
             'controller' => [
                 ...
-                'v1/leads',
-                'v1/products',
-                'v1/orders',
+                'v1/test',
                 ...
             ],
         ],
