@@ -12,6 +12,7 @@
     ],
     "require": {
         "php":"7.*",
+        "yii2mod/yii2-enum": "*",
         "yiisoft/yii2": "~2.0.0"
     },
     "autoload": {

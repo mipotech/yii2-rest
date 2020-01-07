@@ -2,8 +2,28 @@
 
 namespace mipotech\yii2rest;
 
+use Yii;
+
 class BaseModule extends \yii\base\Module
 {
+    /**
+     * @var callable
+     */
+    public $roleIdCallback = null;
+
+    /**
+     * @inheritdoc
+     */
+    public function init()
+    {
+        parent::init();
+
+        $configFile = Yii::getAlias('@app/config/rest.php');
+        if (file_exists($configFile)) {
+            Yii::configure($this, require $configFile);
+        }
+    }
+
     /**
      * Override createControllerByID to allow searching for the controller in two different namespaces:
      * 1. First look in the default controller namespace (by default app\api\controllers)
