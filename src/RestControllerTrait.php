@@ -6,8 +6,7 @@ use Yii;
 use yii\filters\ContentNegotiator;
 use yii\filters\Cors;
 use yii\filters\auth\HttpBearerAuth;
-
-use app\components\Response;
+use yii\web\Response;
 
 trait RestControllerTrait
 {
