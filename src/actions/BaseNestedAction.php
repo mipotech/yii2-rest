@@ -2,6 +2,8 @@
 
 namespace mipotech\yii2rest\actions;
 
+use Yii;
+
 /**
  * This is the base class for all nested actions.
  */
@@ -10,7 +12,7 @@ abstract class BaseNestedAction extends BaseAction
     /**
      * @inheritdoc
      */
-    public function run($id, string $nestedAction)
+    public function run($id, string $nestedAction, $nestedId = null)
     {
         // Retrieve the parent model associated with this nested action
         $parentModel = $this->findModel($id, $nestedAction);
@@ -23,10 +25,12 @@ abstract class BaseNestedAction extends BaseAction
          */
         $fnName = 'nested' . $this->normalizeActionName($nestedAction) . $this->functionSuffix();
         if (method_exists($this->controller, $fnName)) {
-            $ret = ['data' => call_user_func([$this->controller, $fnName], $parentModel)];
+            Yii::debug("Found nested action function {$fnName} for nested action {$nestedAction}");
+            $ret = call_user_func([$this->controller, $fnName], $parentModel, $nestedId);
             $this->postProcess($ret);
             return $ret;
         } else {
+            Yii::debug("Could not resolve nested action {$nestedAction} to existing function. Target function name: {$fnName}");
             throw new \yii\web\MethodNotAllowedHttpException("No implementation for {$fnName}");
         }
     }

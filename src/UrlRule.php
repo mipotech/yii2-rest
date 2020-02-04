@@ -8,8 +8,10 @@ class UrlRule extends \yii\rest\UrlRule
     public $extraPatterns = [
         'GET,HEAD {id}/<nestedAction:[\w\-]+>' => 'nested-index',
         'POST {id}/<nestedAction:[\w\-]+>' => 'nested-create',
-        'GET,HEAD {id}/<nestedAction:[\w\-]+>/<nestedId:[0-9]+>' => 'nested-view',
-        'PUT {id}/<nestedAction:[\w\-]+>/<nestedId:[0-9]+>' => 'nested-update',
-        'PUT {id}/<nestedAction:[\w\-]+>/<nestedId:[0-9]+>' => 'nested-delete',
+        'GET,HEAD {id}/<nestedAction:[\w\-]+>/<nestedId:[\w]+>' => 'nested-view',
+        'PUT {id}/<nestedAction:[\w\-]+>/<nestedId:[\w]+>' => 'nested-update',
+        'DELETE {id}/<nestedAction:[\w\-]+>/<nestedId:[\w]+>' => 'nested-delete',
+        '{id}/<nestedAction:[\w\-]+>' => 'options',
+        '{id}/<nestedAction:[\w\-]+>/<nestedId:[\w]+>' => 'options',
     ];
 }

@@ -114,6 +114,7 @@ abstract class BaseCrudController extends ActiveController
             'checkAccess' => [$this, 'checkAccess'],
             'findModel' => [$this, 'findModel'],
         ];
+
         $actions['nested-update'] = [
             'class' => 'mipotech\yii2rest\actions\NestedUpdateAction',
             'modelClass' => $this->modelClass,
@@ -143,7 +144,7 @@ abstract class BaseCrudController extends ActiveController
 
     /**
      * Custom implementation of findModel that also checks
-     * permission rules
+     * permission ru    les
      *
      * @param string $id
      * @param \yii\base\Action|string $action
@@ -153,13 +154,21 @@ abstract class BaseCrudController extends ActiveController
      */
     public function findModel(string $id, $action)
     {
+
         if ($this->hasMethod('generateFindQuery')) {
             $query = $this->generateFindQuery($id, $action);
         } else {
             $modelClass = $this->modelClass;
-            $query = $modelClass::find();
 
+            $query = $modelClass::find();
             $keys = $modelClass::primaryKey();
+
+            // It's important to add the table name of the model to the primary keys
+            // because there might be other tables joined later with identical column names
+            array_walk($keys, function(&$value, $key) {
+                $value = $this->modelClass::tableName() . '.' . $value;
+            });
+
             $values = explode(',', $id);
             if (count($keys) === count($values)) {
                 $query->where(array_combine($keys, $values));
@@ -187,6 +196,12 @@ abstract class BaseCrudController extends ActiveController
                     }
                 });
                 $query->andWhere($cond['condition'], $params);
+                if (isset($cond['join'])) {
+                    foreach ($cond['join'] as $joinRule) {
+                        $joinType = $joinRule['type'] ?? 'leftJoin';
+                        $query->{$joinType}($joinRule['table'], $joinRule['on']);
+                    }
+                }
             }
         }
         $model = $query->one();
@@ -208,7 +223,7 @@ abstract class BaseCrudController extends ActiveController
         // Build an array of request params to be passed to the search model
         $modelClass = $this->modelClass;
         $searchModelName = $this->searchModelClass;
-        $model = new $modelClass();
+        //$model = new $modelClass();
         $searchModel = new $searchModelName;
         $formName = $searchModel->formName();
 
@@ -255,31 +270,41 @@ abstract class BaseCrudController extends ActiveController
      * @inheritdoc
      */
     public function afterAction($action, $result)
-    {
+    {       
+        // Save the original result before serialization
+        if (is_object($result)) {
+            $rawResult = clone $result;
+        } else {
+            $rawResult = $result;
+        }
+        
         $result = parent::afterAction($action, $result);
-
+               
         /*
-         * Special formatting cases:
-         * Case 1: For index actions, send the result in the following format:
-         * {"data": {
-         *      "count": 10,
-         *      "rows": [{...},{...}]
-         * }}
+         * If the action returned a data provider, then format the output
+         * in the following manner:
+         * 'data' => [
+         *     'count' => X,
+         *     'rows' => [...],
+         *     //'labels' => [...]
+         * ],
          */
-        if ($action->id == 'index' && is_array($result) && Yii::$app->response->statusCode < 300) {
+        if ($rawResult instanceof \yii\data\ActiveDataProvider && Yii::$app->response->statusCode < 300) {
+            $count = Yii::$app->response->headers->get('x-pagination-total-count');
             $result = [
                 'data' => [
-                    'count' => Yii::$app->response->headers->get('x-pagination-total-count'),
+                    'count' => $count,
                     'rows' => $result,
-                    'labels' => $this->labels,
+                    //'labels' => $this->labels,
                 ],
             ];
-        } elseif (is_array($result) && !empty($this->labels) && Yii::$app->response->statusCode < 300) {
+        } elseif (is_array($result) && Yii::$app->response->statusCode < 300) {
             $result = [
-                'data' => $result,
-                'labels' => $this->labels,
+                'data' => $result                
             ];
         }
+        
         return $result;
     }
 }
+
