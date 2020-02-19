@@ -90,6 +90,10 @@ abstract class BaseCrudController extends ActiveController
         $actions['update']['findModel'] = [$this, 'findModel'];
         $actions['view']['findModel'] = [$this, 'findModel'];
 
+        // Override the action class for file upload support
+        $actions['create']['class'] = 'mipotech\yii2rest\actions\CreateAction';
+        $actions['update']['class'] = 'mipotech\yii2rest\actions\UpdateAction';
+
         $actions['nested-create'] = [
             'class' => 'mipotech\yii2rest\actions\NestedCreateAction',
             'modelClass' => $this->modelClass,
@@ -114,7 +118,6 @@ abstract class BaseCrudController extends ActiveController
             'checkAccess' => [$this, 'checkAccess'],
             'findModel' => [$this, 'findModel'],
         ];
-
         $actions['nested-update'] = [
             'class' => 'mipotech\yii2rest\actions\NestedUpdateAction',
             'modelClass' => $this->modelClass,
@@ -270,16 +273,16 @@ abstract class BaseCrudController extends ActiveController
      * @inheritdoc
      */
     public function afterAction($action, $result)
-    {       
+    {
         // Save the original result before serialization
         if (is_object($result)) {
             $rawResult = clone $result;
         } else {
             $rawResult = $result;
         }
-        
+
         $result = parent::afterAction($action, $result);
-               
+
         /*
          * If the action returned a data provider, then format the output
          * in the following manner:
@@ -300,11 +303,10 @@ abstract class BaseCrudController extends ActiveController
             ];
         } elseif (is_array($result) && Yii::$app->response->statusCode < 300) {
             $result = [
-                'data' => $result                
+                'data' => $result
             ];
         }
-        
+
         return $result;
     }
 }
-

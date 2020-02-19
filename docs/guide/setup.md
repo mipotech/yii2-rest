@@ -12,6 +12,7 @@ You will need to make the following modifications to `config/web.php` in order t
     ...
     'parsers' => [
         'application/json' => 'yii\web\JsonParser',
+        'multipart/form-data' => 'yii\web\MultipartFormDataParser',
     ],
     ...
 ]
