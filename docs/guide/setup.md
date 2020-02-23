@@ -49,6 +49,22 @@ You will need to make the following modifications to `config/web.php` in order t
 ]
 ```
 
+4. Optional: configure the JSON formatter to be number-aware (without this setting, most numeric values will be passed to the client as strings):
+
+```php
+'response' => [
+    ...
+     'formatters' => [
+        \yii\web\Response::FORMAT_JSON => [
+            'class' => 'yii\web\JsonResponseFormatter',
+            'prettyPrint' => YII_DEBUG,
+            'encodeOptions' => JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE | JSON_NUMERIC_CHECK,
+        ],
+    ],
+    ...
+]
+```
+
 ## config/rest.php
 
 Create a new file in the `config` directory named `rest.php`. Paste in the following template:
