@@ -23,8 +23,18 @@ abstract class BaseNestedAction extends BaseAction
          * Action = something like "grades"
          * Suffix = create/index/update/delete/view/etc.
          */
+        $actionMap = $this->controller->actions();
         $fnName = 'nested' . $this->normalizeActionName($nestedAction) . $this->functionSuffix();
-        if (method_exists($this->controller, $fnName)) {
+        if (isset($actionMap[$fnName])) {
+            Yii::debug("Found nested action class {$fnName} for nested action {$nestedAction}");
+            $tmpAction = Yii::createObject($actionMap[$fnName], [$fnName, $this->controller]);
+            $ret = $tmpAction->runWithParams([
+                'model' => $parentModel,
+                'id' => $nestedId,
+            ]);
+            $this->postProcess($ret);
+            return $ret;
+        } elseif (method_exists($this->controller, $fnName)) {
             Yii::debug("Found nested action function {$fnName} for nested action {$nestedAction}");
             $ret = call_user_func([$this->controller, $fnName], $parentModel, $nestedId);
             $this->postProcess($ret);
