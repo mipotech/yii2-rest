@@ -97,7 +97,7 @@ trait RestControllerTrait
         Yii::debug("Permissions record: " . json_encode($this->permissionRule));
 
         if (empty($this->permissionRule)) {
-            $msg = "No permissions rule found. User ID = " . Yii::$app->user->id . " ; Model = {$this->modelClass}; Action = {$action}";
+            $msg = "No permissions rule found. User ID = " . Yii::$app->user->id . " ; Controller = {$this->id}; Action = {$action}";
             $this->errorHandler('Forbidden', 403, $msg);
             Yii::error($msg, 'permissions');
             throw new \yii\web\ForbiddenHttpException($msg);
