@@ -28,7 +28,7 @@ trait RestControllerTrait
      * @var mipotech\yii2rest\models\Permission the model representing the permission rule
      *  that was found for authorizing the current request
      */
-    protected $permissionRule;
+    public $permissionRule;
 
     /**
      * @inheritdoc
