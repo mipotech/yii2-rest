@@ -157,7 +157,6 @@ abstract class BaseCrudController extends ActiveController
      */
     public function findModel(string $id, $action)
     {
-
         if ($this->hasMethod('generateFindQuery')) {
             $query = $this->generateFindQuery($id, $action);
         } else {
@@ -189,6 +188,7 @@ abstract class BaseCrudController extends ActiveController
                 throw new \yii\base\Exception("Action must be instance of yii\base\Action or textual ID");
             }
         }
+
         if (!empty($this->permissionRule->conditions)) {
             foreach ($this->permissionRule->conditions as $cond) {
                 $params = $cond['params'] ?? [];
@@ -236,7 +236,53 @@ abstract class BaseCrudController extends ActiveController
         $searchArr = [
             $formName => $searchParams,
         ];
+
         $searchDataProvider = $searchModel->search($searchArr);
+
+        // Automatic free text search
+        if (!empty($searchModel->q)) {
+            $searchFields = $searchModel->searchFields();
+            $cond = [];
+            foreach ($searchFields as $searchField) {
+                if (preg_match('/(.+)\.(\w+)/', $searchField, $matches)) {
+                    $tableName = $matches[1];
+                    $fieldName = $matches[2];
+                } else {
+                    $tableName = $searchModel::tableName();
+                    $fieldName = $searchField;
+                }
+
+                Yii::debug("Search field: " . print_r($searchField, true) . "; Table name = {$tableName}; Field name = {$fieldName}");
+
+                /**
+                 * @link http://www.yiiframework.com/doc-2.0/yii-db-columnschema.html#$phpType-detail
+                 */
+                $schemaFieldType = $searchModel::getDb()
+                    ->getTableSchema($tableName)
+                    ->getColumn($fieldName)
+                    ->phpType;
+
+                // Special cases based upon the DB field type
+                switch ($schemaFieldType) {
+                    case 'integer':
+                        // If the field is numeric and the search term is not, then skip this field.
+                        // Otherwise, the search returns incorrect results
+                        if (!is_numeric($searchModel->q)) {
+                            continue 2;
+                        } else {
+                            $cond[] = ['=', $tableName . '.' . $fieldName, $searchModel->q];
+                        }
+                        break;
+                    case 'string':
+                        $cond[] = ['like', $tableName . '.' . $fieldName, $searchModel->q];
+                        break;
+                }
+            }
+
+            array_unshift($cond, 'or');
+
+            $searchDataProvider->query->andFilterWhere($cond);
+        }
 
         // Parse any conditions that come from the permission rules
         if (!empty($this->permissionRule->conditions)) {
@@ -249,6 +295,18 @@ abstract class BaseCrudController extends ActiveController
                     }
                 });
                 $searchDataProvider->query->andWhere($cond['condition'], $params);
+                $existingJoins = $searchDataProvider->query->join;
+
+                $cleanJoin = $this->cleanJoin($searchDataProvider->query->join);
+
+                if (isset($cond['join'])) {
+                    foreach ($cond['join'] as $key=>$joinRule) {
+                        if (!$cleanJoin || !$this->includesInJoin($joinRule, $cleanJoin)) {
+                            $joinType = $joinRule['type'] ?? 'leftJoin';
+                            $searchDataProvider->query->{$joinType}($joinRule['table'], $joinRule['on']);
+                        }
+                    }
+                }
             }
         }
 
@@ -267,6 +325,47 @@ abstract class BaseCrudController extends ActiveController
         ]);
 
         return $finalDataProvider;
+    }
+
+    /**
+     * clears join from spaces, }, {, %
+     */
+    private function cleanJoin($join)
+    {
+        if ($join) {
+            foreach ($join as $k=>$current) {
+                foreach ($current as $key=>$val) {
+                    $join[$k][$key] = strtoupper(preg_replace("/[\s{}%]/", "", $val));
+                }
+            }
+        }
+        return $join;
+    }
+
+    /**
+     * return true iff $join is included in $allJoins
+     */
+    private function includesInJoin($join, $allJoins)
+    {
+        $valuesJoin = array_values($join);
+
+        foreach ($allJoins as $currentJoin) {
+            $valuesCurrent = array_values($currentJoin);
+
+            $same = true;
+            foreach ($valuesCurrent as $key=>$val) {
+                if ($val != strtoupper(preg_replace("/[\s{}%]/", "", $valuesJoin[$key]))) {
+                    $same = false;
+                    break;
+                }
+            }
+
+            // if we got here - all the parts are equal and we've found a fit join
+            if ($same) {
+                return true;
+            }
+        }
+        return FALSE;
     }
 
     /**
@@ -292,7 +391,7 @@ abstract class BaseCrudController extends ActiveController
          *     //'labels' => [...]
          * ],
          */
-        if ($rawResult instanceof \yii\data\ActiveDataProvider && Yii::$app->response->statusCode < 300) {
+        if ($rawResult instanceof \yii\data\BaseDataProvider && Yii::$app->response->statusCode < 300) {
             $count = Yii::$app->response->headers->get('x-pagination-total-count');
             $result = [
                 'data' => [
