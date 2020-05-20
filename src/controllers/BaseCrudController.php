@@ -343,9 +343,9 @@ abstract class BaseCrudController extends ActiveController
     }
 
     /**
-     * return true iff $join is included in $allJoins
+     * @return bool true if $join is included in $allJoins
      */
-    private function includesInJoin($join, $allJoins)
+    private function includesInJoin($join, $allJoins): bool
     {
         $valuesJoin = array_values($join);
 
@@ -365,7 +365,7 @@ abstract class BaseCrudController extends ActiveController
                 return true;
             }
         }
-        return FALSE;
+        return false;
     }
 
     /**
