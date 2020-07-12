@@ -41,10 +41,17 @@ abstract class BaseCrudController extends ActiveController
         ];
         if (is_callable(Yii::$app->controller->module->roleIdCallback)) {
             if ($roleId = call_user_func(Yii::$app->controller->module->roleIdCallback, Yii::$app->user)) {
-                $scopeCondition[] = ['and', [
-                    'scope' => PermissionScopes::ROLE,
-                    'scope_id' => $roleId,
-                ]];
+                if (is_array($roleId)) {
+                    $scopeCondition[] = ['and',
+                        ['scope' => PermissionScopes::ROLE],
+                        ['in', 'scope_id', $roleId],
+                    ];
+                } else {
+                    $scopeCondition[] = ['and', [
+                        'scope' => PermissionScopes::ROLE,
+                        'scope_id' => $roleId,
+                    ]];
+                }
             }
         }
 
