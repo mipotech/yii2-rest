@@ -191,12 +191,10 @@ class Permission extends ActiveRecord implements CmsRecordInterface
                 'value' => function ($model, $key, $index, $column) {
                     switch ($model->scope) {
                         case PermissionScopes::USER:
-                            //$user = UsersInRoles::findOne($model->scope_id);
                             $displayText = 'User ' . $model->scope_id;
                             break;
                         case PermissionScopes::ROLE:
-                            //$displayText = Role::findOne($model->scope_id)->RoleName;
-                            $displayText = 'Role ' . $model->scope_id;
+                            $displayText = 'Role ' . (is_array($model->scope_id) ? implode(', ', $model->scope_id) : $model->scope_id);
                             break;
                         case PermissionScopes::GLOBAL:
                         default:
