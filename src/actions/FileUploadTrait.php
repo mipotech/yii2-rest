@@ -71,13 +71,13 @@ trait FileUploadTrait
     {
         // Resolve the short name of the class
         $classNameParts = explode('\\', get_class($model));
-        $shortClassName = array_pop($classNameParts);
-        $shortClassName = lcfirst($shortClassName);
+        $shortClassName = lcfirst(array_pop($classNameParts));
 
         // Build the various paths
-        $virtualPath = '/uploads' . '/' . $shortClassName . '/' . date('Y');
+        $virtualPath = "/uploads/{$shortClassName}/" . date('Y');
         $physicalPath = Yii::getAlias('@webroot') . $virtualPath;
-        $savePath = $physicalPath . '/' . $file->baseName . '.' . $file->extension;
+        $fileName = $model->primaryKey . '-' . $file->baseName . '-' . Yii::$app->security->generateRandomString(5) . '.' . $file->extension;
+        $savePath = $physicalPath . '/' . $fileName;
 
         Yii::debug("Virtual path: {$virtualPath}\nPhysical path: {$physicalPath}\nFinal save path: {$savePath}");
 
@@ -86,15 +86,20 @@ trait FileUploadTrait
         }
 
         // Before saving the new file, check if there's an old file that needs to be removed
-        if ($this->id == 'update' && !empty($model->{$attribute})) {
+        $isUpdate = in_array(Yii::$app->request->method, ['PUT', 'PATCH']);
+        if ($isUpdate && !empty($model->{$attribute})) {
             $tmpPath = Yii::getAlias('@webroot' . $model->{$attribute});
+            Yii::debug("Deleting existing file: {$tmpPath}");
             if (file_exists($tmpPath)) {
                 unlink($tmpPath);
+                Yii::debug("File deleted: {$tmpPath}");
+            } else {
+                Yii::warning("File not found: {$tmpPath}");
             }
         }
 
         $file->saveAs($savePath);
-        $model->{$attribute} = $virtualPath . '/' . $file->baseName . '.' . $file->extension;
+        $model->{$attribute} = $virtualPath . '/' . $fileName;
         $model->save(false);
     }
 }
