@@ -54,17 +54,36 @@ class PermissionSearch extends Permission
             return $dataProvider;
         }
 
+        $this->addMixedCondition($query, 'entity_id');
+        $this->addMixedCondition($query, 'entity_type');
+        $this->addMixedCondition($query, 'scope');
+        $this->addMixedCondition($query, 'scope_id');
+
         // grid filtering conditions
         $query->andFilterWhere(['like', '_id', $this->_id])
-            ->andFilterWhere(['like', 'entity_type', $this->entity_type])
             ->andFilterWhere(['like', 'entity_name', $this->entity_name])
-            ->andFilterWhere(['like', 'entity_id', $this->entity_id])
-            ->andFilterWhere(['like', 'allowed_actions', $this->allowed_actions])
-            ->andFilterWhere(['like', 'scope', $this->scope])
-            ->andFilterWhere(['like', 'scope_id', $this->scope_id])
+            ->andFilterWhere(['in', 'allowed_actions', $this->allowed_actions])
             ->andFilterWhere(['like', 'conditions', $this->conditions])
-            ->andFilterWhere(['like', 'fields', $this->fields]);
+            ->andFilterWhere(['in', 'fields', $this->fields]);
 
         return $dataProvider;
+    }
+
+    /**
+     * Add a condition for a search parameter that may be
+     * either numeric or a string.
+     *
+     * @param yii\db\Query $query
+     * @param string $attribute
+     */
+    protected function addMixedCondition(&$query, string $attribute)
+    {
+        if (!empty($this->{$attribute})) {
+            if (is_numeric($this->{$attribute})) {
+                $query->andWhere([$attribute => (int)$this->{$attribute}]);
+            } else {
+                $query->andWhere(['like', $attribute, $this->{$attribute}]);
+            }
+        }
     }
 }
