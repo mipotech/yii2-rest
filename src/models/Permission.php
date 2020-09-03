@@ -214,6 +214,15 @@ class Permission extends ActiveRecord implements CmsRecordInterface
      */
     public function renderRules()
     {
+        $actionsOptions = PermissionActions::getList();
+        if (!empty($this->allowed_actions)) {
+            foreach ($this->allowed_actions as $act) {
+                if (!in_array($act, array_keys($actionsOptions))) {
+                    $actionsOptions[$act] = $act;
+                }
+            }
+        }
+
         return [
             'entity_type' => [
                 'type' => 'select',
@@ -228,7 +237,7 @@ class Permission extends ActiveRecord implements CmsRecordInterface
             'allowed_actions' => [
                 'type' => 'select',
                 'multiple' => true,
-                'options' => PermissionActions::getList(),
+                'options' => $actionsOptions,
                 'pluginOptions' => [
                     'tags' => true,
                 ],
