@@ -2,15 +2,15 @@
 
 namespace mipotech\yii2rest\controllers;
 
+use mipotech\yii2rest\enums\PermissionEntityTypes;
+
+use mipotech\yii2rest\enums\PermissionScopes;
+use mipotech\yii2rest\models\Permission;
+use mipotech\yii2rest\RestControllerTrait;
 use Yii;
 use yii\base\Action;
-use yii\data\ActiveDataProvider;
-use yii\rest\ActiveController;
+use yii\data\ActiveDataProvider;use yii\rest\ActiveController;
 use yii\rest\IndexAction;
-
-use mipotech\yii2rest\RestControllerTrait;
-use mipotech\yii2rest\enums\{PermissionEntityTypes, PermissionScopes};
-use mipotech\yii2rest\models\Permission;
 
 abstract class BaseCrudController extends ActiveController
 {
@@ -31,7 +31,7 @@ abstract class BaseCrudController extends ActiveController
          * No matter what, we allow for a global role and a user-level rule.
          * If the consumer of this package has defined a callback to resolve the role id,
          * then we will add a role-level condition as well.
-        */
+         */
         $scopeCondition = ['or',
             ['scope' => PermissionScopes::GLOBAL],
             ['and', [
@@ -64,14 +64,14 @@ abstract class BaseCrudController extends ActiveController
             ->andWhere($scopeCondition)
             ->orderBy([
                 'scope' => SORT_ASC,
-                'scope_id' => SORT_DESC,    // favor a rule with a scope specific to this user
+                'scope_id' => SORT_DESC, // favor a rule with a scope specific to this user
             ]);
-            if (!is_null($model)) {
-                $permissionQuery->andWhere(['or',
-                    ['entity_id' => NULL],
-                    ['entity_id' => $model->primaryKey],
-                ]);
-            }
+        if (!is_null($model)) {
+            $permissionQuery->andWhere(['or',
+                ['entity_id' => null],
+                ['entity_id' => $model->primaryKey],
+            ]);
+        }
         return $permissionQuery;
     }
 
@@ -139,8 +139,8 @@ abstract class BaseCrudController extends ActiveController
     }
 
     /**
-    * {@inheritdoc}
-    */
+     * {@inheritdoc}
+     */
     protected function verbs()
     {
         return array_merge(parent::verbs(), [
@@ -174,7 +174,7 @@ abstract class BaseCrudController extends ActiveController
 
             // It's important to add the table name of the model to the primary keys
             // because there might be other tables joined later with identical column names
-            array_walk($keys, function(&$value, $key) {
+            array_walk($keys, function (&$value, $key) {
                 $value = $this->modelClass::tableName() . '.' . $value;
             });
 
@@ -302,12 +302,10 @@ abstract class BaseCrudController extends ActiveController
                     }
                 });
                 $searchDataProvider->query->andWhere($cond['condition'], $params);
-                $existingJoins = $searchDataProvider->query->join;
-
-                $cleanJoin = $this->cleanJoin($searchDataProvider->query->join);
 
                 if (isset($cond['join'])) {
-                    foreach ($cond['join'] as $key=>$joinRule) {
+                    $cleanJoin = $this->cleanJoin($searchDataProvider->query->join);
+                    foreach ($cond['join'] as $key => $joinRule) {
                         if (!$cleanJoin || !$this->includesInJoin($joinRule, $cleanJoin)) {
                             $joinType = $joinRule['type'] ?? 'leftJoin';
                             $searchDataProvider->query->{$joinType}($joinRule['table'], $joinRule['on']);
@@ -319,7 +317,7 @@ abstract class BaseCrudController extends ActiveController
 
         // Generate a clean data provider a la \yii\rest\IndexAction
         $finalDataProvider = Yii::createObject([
-            'class' => ActiveDataProvider::className(),
+            'class' => ActiveDataProvider::class,
             'query' => $searchDataProvider->query,
             'pagination' => [
                 'pageSizeLimit' => [1, 150],
@@ -340,9 +338,11 @@ abstract class BaseCrudController extends ActiveController
     private function cleanJoin($join)
     {
         if ($join) {
-            foreach ($join as $k=>$current) {
-                foreach ($current as $key=>$val) {
-                    $join[$k][$key] = strtoupper(preg_replace("/[\s{}%]/", "", $val));
+            foreach ($join as $k => $current) {
+                foreach ($current as $key => $val) {
+                    if (is_scalar($val)) {
+                        $join[$k][$key] = strtoupper(preg_replace("/[\s{}%]/", "", $val));
+                    }
                 }
             }
         }
@@ -360,7 +360,7 @@ abstract class BaseCrudController extends ActiveController
             $valuesCurrent = array_values($currentJoin);
 
             $same = true;
-            foreach ($valuesCurrent as $key=>$val) {
+            foreach ($valuesCurrent as $key => $val) {
                 if ($val != strtoupper(preg_replace("/[\s{}%]/", "", $valuesJoin[$key]))) {
                     $same = false;
                     break;
@@ -409,7 +409,7 @@ abstract class BaseCrudController extends ActiveController
             ];
         } elseif (is_array($result) && Yii::$app->response->statusCode < 300) {
             $result = [
-                'data' => $result
+                'data' => $result,
             ];
         }
 
