@@ -3,9 +3,9 @@
 namespace mipotech\yii2rest;
 
 use Yii;
+use yii\filters\auth\HttpBearerAuth;
 use yii\filters\ContentNegotiator;
 use yii\filters\Cors;
-use yii\filters\auth\HttpBearerAuth;
 use yii\web\Response;
 
 trait RestControllerTrait
@@ -43,19 +43,23 @@ trait RestControllerTrait
         }
 
         // add CORS filter
-        $behaviors['corsFilter'] = [
-            'class' => Cors::className(),
+        $corsFilterConfig = [
+            'class' => Cors::class,
         ];
+        if (!empty(Yii::$app->controller->module->corsOptions)) {
+            $corsFilterConfig = array_merge($corsFilterConfig, Yii::$app->controller->module->corsOptions);
+        }
+        $behaviors['corsFilter'] = $corsFilterConfig;
 
         // re-add authentication filter
         $behaviors['authenticator'] = [
-            'class' => HttpBearerAuth::className(),
+            'class' => HttpBearerAuth::class,
             'except' => array_merge(['options'], $this->authExceptActions),
         ];
 
         // enable JSON-based requests
         $behaviors['contentNegotiator'] = [
-            'class' => ContentNegotiator::className(),
+            'class' => ContentNegotiator::class,
             'formats' => [
                 'application/json' => Response::FORMAT_JSON,
                 'prettyPrint' => YII_DEBUG, // use "pretty" output in debug mode
