@@ -7,6 +7,11 @@ use Yii;
 class BaseModule extends \yii\base\Module
 {
     /**
+     * @link https://www.yiiframework.com/doc/api/2.0/yii-filters-cors
+     * @var array
+     */
+    public $corsOptions = [];
+    /**
      * @var callable
      */
     public $roleIdCallback = null;
