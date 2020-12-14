@@ -12,6 +12,11 @@ class BaseModule extends \yii\base\Module
      */
     public $corsOptions = [];
     /**
+     * @var string the default fallback controller namespace if the controller
+     *  can't be resolved to an organic controller under this module
+     */
+    public $fallbackControllerNamespace = 'app\api\controllers';
+    /**
      * @var callable
      */
     public $roleIdCallback = null;
@@ -43,7 +48,7 @@ class BaseModule extends \yii\base\Module
         if (!empty($ret)) {
             return $ret;
         } else {
-            $this->controllerNamespace = 'app\api\controllers';
+            $this->controllerNamespace = $this->fallbackControllerNamespace;
             return parent::createControllerByID($id);
         }
     }
