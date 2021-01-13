@@ -42,14 +42,14 @@ trait RestControllerTrait
             unset($behaviors['authenticator']);
         }
 
-        // add CORS filter
+        // Prepend CORS filter to the beginning of the behaviors array
         $corsFilterConfig = [
             'class' => Cors::class,
         ];
         if (!empty(Yii::$app->controller->module->corsOptions)) {
             $corsFilterConfig = array_merge($corsFilterConfig, Yii::$app->controller->module->corsOptions);
         }
-        $behaviors['corsFilter'] = $corsFilterConfig;
+        $behaviors = ['corsFilter' => $corsFilterConfig] + $behaviors;
 
         // re-add authentication filter
         $behaviors['authenticator'] = [
