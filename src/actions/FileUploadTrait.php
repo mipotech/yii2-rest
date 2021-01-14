@@ -98,7 +98,16 @@ trait FileUploadTrait
             }
         }
 
-        $file->saveAs($savePath);
+        $res = $file->saveAs($savePath);
+        if (!$res) {
+            Yii::warning("saveAs failed. Trying copy...");
+            $res = $file->saveAs($savePath, false);
+            if ($res) {
+                @unlink($file->tempName);
+            } else {
+                Yii::error("saveAs with copy also failed");
+            }
+        }
         $model->{$attribute} = $virtualPath . '/' . $fileName;
         $model->save(false);
     }
