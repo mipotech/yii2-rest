@@ -153,6 +153,27 @@ abstract class BaseCrudController extends ActiveController
     }
 
     /**
+     * @inheritdoc
+     */
+    public function checkAccess($action, $model = null, $params = [])
+    {
+        parent::checkAccess($action, $model, $params);
+
+        // If this is a modification request, check if we are limited to specific fields
+        if (!empty($this->permissionRule) && (Yii::$app->request->isPut || Yii::$app->request->isPost)) {
+            if (isset($this->permissionRule['fields']) && !empty($this->permissionRule['fields'][$action])) {
+                $postedFields = Yii::$app->request->bodyParams;
+                $postedFieldKeys = array_keys($postedFields);
+                foreach ($postedFieldKeys as $key) {
+                    if (!in_array($key, $this->permissionRule['fields'][$action])) {
+                        throw new \yii\web\ForbiddenHttpException("Invalid update field: {$key}");
+                    }
+                }
+            }
+        }
+    }
+
+    /**
      * Custom implementation of findModel that also checks
      * permission ru    les
      *

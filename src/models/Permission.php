@@ -72,6 +72,11 @@ class Permission extends ActiveRecord implements CmsRecordInterface
              *     "Name",
              *     "Description"
              * ]
+             * or as an array broken down by action:
+             * fields: {
+             *      "create": ["Name"],
+             *      "update": ["Name", "StatusId"]
+             * }
              */
             'fields',
         ];
@@ -94,7 +99,6 @@ class Permission extends ActiveRecord implements CmsRecordInterface
                     PermissionScopes::ROLE,
                 ]);
             }],
-            ['fields', 'each', 'rule' => ['safe']],
             // When the record refers to a model, make sure the model name
             // is valid
             ['entity_name', function ($attribute, $params, $validator) {
@@ -104,7 +108,7 @@ class Permission extends ActiveRecord implements CmsRecordInterface
                     }
                 }
             }],
-            ['entity_id', 'safe'],
+            [['entity_id', 'fields'], 'safe'],
         ];
     }
 
