@@ -14,7 +14,9 @@ use yii\rest\IndexAction;
 
 abstract class BaseCrudController extends ActiveController
 {
-    use RestControllerTrait;
+    use RestControllerTrait {
+        checkAccess as public traitCheckAccess;
+    }
 
     /**
      * @var string|null the name of the relevant search model
@@ -157,7 +159,7 @@ abstract class BaseCrudController extends ActiveController
      */
     public function checkAccess($action, $model = null, $params = [])
     {
-        parent::checkAccess($action, $model, $params);
+        $this->traitCheckAccess($action, $model, $params);
 
         // If this is a modification request, check if we are limited to specific fields
         if (!empty($this->permissionRule) && (Yii::$app->request->isPut || Yii::$app->request->isPost)) {
