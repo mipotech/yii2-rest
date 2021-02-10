@@ -9,7 +9,9 @@ use mipotech\yii2rest\models\Permission;
 use mipotech\yii2rest\RestControllerTrait;
 use Yii;
 use yii\base\Action;
-use yii\data\ActiveDataProvider;use yii\rest\ActiveController;
+use yii\data\ActiveDataProvider;
+use yii\db\Expression;
+use yii\rest\ActiveController;
 use yii\rest\IndexAction;
 
 abstract class BaseCrudController extends ActiveController
@@ -274,43 +276,46 @@ abstract class BaseCrudController extends ActiveController
             $searchFields = $searchModel->searchFields();
             $cond = [];
             foreach ($searchFields as $searchField) {
-                if (preg_match('/(.+)\.(\w+)/', $searchField, $matches)) {
-                    $tableName = $matches[1];
-                    $fieldName = $matches[2];
-                } else {
-                    $tableName = $searchModel::tableName();
-                    $fieldName = $searchField;
-                }
+                if ($searchField instanceof Expression) {
+                    $cond[] = ['like', $searchField, $searchModel->q];
+                } elseif (is_string($searchField)) {
+                    if (preg_match('/(.+)\.(\w+)/', $searchField, $matches)) {
+                        $tableName = $matches[1];
+                        $fieldName = $matches[2];
+                    } else {
+                        $tableName = $searchModel::tableName();
+                        $fieldName = $searchField;
+                    }
 
-                Yii::debug("Search field: " . print_r($searchField, true) . "; Table name = {$tableName}; Field name = {$fieldName}");
+                    Yii::debug("Search field: " . print_r($searchField, true) . "; Table name = {$tableName}; Field name = {$fieldName}");
 
-                /**
-                 * @link http://www.yiiframework.com/doc-2.0/yii-db-columnschema.html#$phpType-detail
-                 */
-                $schemaFieldType = $searchModel::getDb()
-                    ->getTableSchema($tableName)
-                    ->getColumn($fieldName)
-                    ->phpType;
+                    /**
+                     * @link http://www.yiiframework.com/doc-2.0/yii-db-columnschema.html#$phpType-detail
+                     */
+                    $schemaFieldType = $searchModel::getDb()
+                        ->getTableSchema($tableName)
+                        ->getColumn($fieldName)
+                        ->phpType;
 
-                // Special cases based upon the DB field type
-                switch ($schemaFieldType) {
-                    case 'integer':
-                        // If the field is numeric and the search term is not, then skip this field.
-                        // Otherwise, the search returns incorrect results
-                        if (!is_numeric($searchModel->q)) {
-                            continue 2;
-                        } else {
-                            $cond[] = ['=', $tableName . '.' . $fieldName, $searchModel->q];
-                        }
-                        break;
-                    case 'string':
-                        $cond[] = ['like', $tableName . '.' . $fieldName, $searchModel->q];
-                        break;
+                    // Special cases based upon the DB field type
+                    switch ($schemaFieldType) {
+                        case 'integer':
+                            // If the field is numeric and the search term is not, then skip this field.
+                            // Otherwise, the search returns incorrect results
+                            if (!is_numeric($searchModel->q)) {
+                                continue 2;
+                            } else {
+                                $cond[] = ['=', $tableName . '.' . $fieldName, $searchModel->q];
+                            }
+                            break;
+                        case 'string':
+                            $cond[] = ['like', $tableName . '.' . $fieldName, $searchModel->q];
+                            break;
+                    }
                 }
             }
 
             array_unshift($cond, 'or');
-
             $searchDataProvider->query->andFilterWhere($cond);
         }
 
