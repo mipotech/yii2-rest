@@ -91,7 +91,7 @@ class Permission extends ActiveRecord implements CmsRecordInterface
             [['entity_type', 'entity_name', 'allowed_actions', 'scope',], 'required'],
             ['entity_type', 'in', 'range' => array_keys(PermissionEntityTypes::getList())],
             [['entity_name'], 'string'],
-            [['allowed_actions', 'conditions'], 'each', 'rule' => ['string']],
+            [['allowed_actions'], 'each', 'rule' => ['string']],
             ['scope', 'in', 'range' => array_keys(PermissionScopes::getList())],
             ['scope_id', 'required', 'when' => function($model) {
                 return in_array($model->scope, [
@@ -108,7 +108,7 @@ class Permission extends ActiveRecord implements CmsRecordInterface
                     }
                 }
             }],
-            [['entity_id', 'fields'], 'safe'],
+            [['entity_id', 'fields', 'conditions'], 'safe'],
         ];
     }
 
