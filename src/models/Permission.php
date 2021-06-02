@@ -104,7 +104,7 @@ class Permission extends ActiveRecord implements CmsRecordInterface
                     }
                 }
             }],
-            ['entity_id', 'conditions', 'safe'],
+            [['entity_id', 'conditions'], 'safe'],
         ];
     }
 
