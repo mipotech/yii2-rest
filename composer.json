@@ -6,8 +6,8 @@
     "license": "MIT",
     "authors": [
         {
-            "name": "Chaim Leichman, MIPO Technologies Ltd",
-            "email": "chaim@mipo.co.il"
+            "name": "MIPO Technologies Ltd",
+            "email": "team@mipo.co.il"
         }
     ],
     "require": {
