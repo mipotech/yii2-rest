@@ -22,6 +22,11 @@ abstract class BaseCrudController extends ActiveController
     public $searchModelClass = null;
 
     /**
+     * @var boolean manual not found error response
+     */
+    public $manualNotFoundError = false;
+
+    /**
      * @inheritdoc
      */
     protected function generatePermissionsQuery(string $action, $model, array $params)
@@ -212,7 +217,9 @@ abstract class BaseCrudController extends ActiveController
         if (isset($model)) {
             return $model;
         } else {
-            throw new \yii\web\NotFoundHttpException();
+            if(!$this->manualNotFoundError) {
+                throw new \yii\web\NotFoundHttpException();
+            }
         }
     }
 
